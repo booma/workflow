@@ -1,0 +1,23 @@
+name: Auto Close Pull Request
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check condition and close pull request
+        if: contains(github.event.pull_request.title, 'CLOSE_ME')
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              state: 'closed'
+            })
