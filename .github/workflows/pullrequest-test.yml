@@ -1,0 +1,43 @@
+name: Auto Close PR Request
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"  
+
+jobs:
+  close-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PRs for auto-close
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const daysToClose = 1;  
+            const today = new Date();
+            const cutoffDate = new Date(today.getTime() - 60 * 60 * 1000);
+            
+            async function run() {
+              const octokit = context.github;
+              const { data: pullRequests } = await octokit.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+              });
+            
+              for (const pr of pullRequests) {
+                const createdAt = new Date(pr.created_at);
+                
+                if (createdAt < cutoffDate) {
+                  await octokit.rest.pulls.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pr.number,
+                    state: 'closed',
+                  });
+                }
+              }
+            }
+            
+            run();
